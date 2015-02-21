@@ -108,7 +108,9 @@
 
 		var X_MIN = 0;
 		var FLOOR = 500;
-		var CEILING = FLOOR - 100;				
+		var CEILING = FLOOR - 150;
+		var JUMP_INITIAL_VELOCITY = -14;
+		var GRAVITY = 1;
 
 	    // ****************************************
 	    // LOAD the audio
@@ -226,9 +228,17 @@
 		var moveLeft = false;
 		var moveRight = false;
 		var jump = false;
-		var descend = false;
 		var fireBreath = false;
 		var isBunnyLookingLeft = false;
+
+		// jump physics
+		var jumpVelocity = 0;
+		var airborne = false;
+
+		var isDescending = function() {
+			return jumpVelocity >= 0;
+		};
+		// jump physics
 
 		left.press = function(){
 			moveLeft = true;
@@ -247,18 +257,24 @@
 		}
 
 		space.press = function(){
-			
-			if(!jump)
-			{			
+			// jump physics
+			if(!airborne) {
+				jumpVelocity = JUMP_INITIAL_VELOCITY;
 				sfxJump.play();
+				jump = true;
+				airborne = true;
 	    	}
-
-		    jump = true;
+			// jump physics 
 		}
 		
 		space.release = function(){
+			// jump physics
 			jump = false;
-			descend = true;
+
+			if (!isDescending()) {
+				jumpVelocity = 0;
+			}
+			// jump physics
 		}
 
 		ctrl.press = function(){
@@ -298,24 +314,25 @@
 	   			isBunnyLookingLeft = true;
 	   		}
 
-	   	 	if(bunny.position.y == CEILING)
-	   	 	{
-	   	 		descend = true;
+	   	 	// jump physics
+	   	 	if (airborne) {
+				bunny.position.y += jumpVelocity;
+				jumpVelocity += GRAVITY;
+			}
+
+	   	 	if(bunny.position.y <= CEILING) {
+	   	 		//bunny will float on the ceiling height depending on the constant values
+	   	 		//uncomment the following line to remove this behavior
+	   	 		//jumpVelocity = 0;
+	   	 		jump = false;
+	   	 		bunny.position.y = CEILING;
 	   	 	}
 
-	   	 	if(bunny.position.y == FLOOR)
-	   	 	{
-	   	 		descend = false;
+	   	 	if(bunny.position.y >= FLOOR) {
+	   	 		airborne = false;
+	   	 		bunny.position.y = FLOOR;
 	   	 	}
-
-	   		if(jump && !descend) {
-	   			bunny.position.y -= 5;
-	   		}
-
-	   		if(descend)
-	   		{
-	   			bunny.position.y += 5;	
-	   		}
+	   	 	// jump physics
 
 	   		if(fireBreath && !isBunnyLookingLeft)
 	   		{
@@ -418,54 +435,58 @@
 	</form>
 
 	<div id="bottom">
-    <center> 
-    <h2>Controls</h2>
-    <p>
-    space = jump<br>
-    ctrl = fire
-    </p>
+	    <center> 
+		    <h2>Controls</h2>
+		    <p>
+			    space = jump<br>
+			    ctrl = fire
+		    </p>
 
-    
-    <h2>Instructions</h2>
-    <p>Click the sound button on the top left and enjoy the fun.</p>
+		    
+		    <h2>Instructions</h2>
+		    <p>Click the sound button on the top left and enjoy the fun.</p>
 
-    <h2>Change Log</h2>
+		    <h2>Change Log</h2>
 
-	<p>0.9<br>
-    * MORE INSANITY MODE<br>
-
-
-	<p>0.8<br>
-    * Chat width alignment has been fixed<br>
-
-	<p>0.7<br>
-    * Chat (probably broken)<br>
+			<p>
+				0.9<br>
+		    	* MORE INSANITY MODE<br>
+			</p>
 
 
-	<p>0.6<br>
-    * Sound effects for jumping and fire breath<br>
-    * Added new image for audio button <br>
+			<p>
+				0.8<br>
+		    	* Chat width alignment has been fixed<br>
+		    </p>
+
+			<p>
+				0.7<br>
+		    	* Chat (probably broken)<br>
+		    </p>
 
 
-	<p>0.5<br>
-    * White text<br>
-
-    <p>0.4<br>
-    * Added Change Log <br>
-    * Performance increase: Fire is now a visible toggle instead of adding sprites in and out of the scene.<br>
-
-    </p>
-
-	<!-- Start of SimpleHitCounter Code -->
-	<div align="center"><a href="http://www.simplehitcounter.com" target="_blank"><img src="http://simplehitcounter.com/hit.php?uid=1859975&f=16777215&b=0" border="0" height="18" width="83" alt="web counter"></a><br><a href="http://www.simplehitcounter.com" target="_blank" style="text-decoration:none;">web counter</a></div>
-	<!-- End of SimpleHitCounter Code -->
+			<p>
+				0.6<br>
+		    	* Sound effects for jumping and fire breath<br>
+		    	* Added new image for audio button <br>
+		    </p>
 
 
-    </center>
+			<p>
+				0.5<br>
+		    	* White text<br>
+		    </p>
 
+		    <p>
+		    	0.4<br>
+		    	* Added Change Log <br>
+		    	* Performance increase: Fire is now a visible toggle instead of adding sprites in and out of the scene.<br>
+		    </p>
+
+			<!-- Start of SimpleHitCounter Code -->
+			<div align="center"><a href="http://www.simplehitcounter.com" target="_blank"><img src="http://simplehitcounter.com/hit.php?uid=1859975&f=16777215&b=0" border="0" height="18" width="83" alt="web counter"></a><br><a href="http://www.simplehitcounter.com" target="_blank" style="text-decoration:none;">web counter</a></div>
+			<!-- End of SimpleHitCounter Code -->
+	    </center>
     </div>
-
-
-
     </body>
 </html>
