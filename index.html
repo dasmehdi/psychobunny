@@ -228,13 +228,16 @@
 		var moveLeft = false;
 		var moveRight = false;
 		var jump = false;
-		var descend = false;
 		var fireBreath = false;
 		var isBunnyLookingLeft = false;
 
 		// jump physics
 		var jumpVelocity = 0;
 		var airborne = false;
+
+		var isDescending = function() {
+			return jumpVelocity >= 0;
+		};
 		// jump physics
 
 		left.press = function(){
@@ -260,7 +263,6 @@
 				sfxJump.play();
 				jump = true;
 				airborne = true;
-				descend = false;
 	    	}
 			// jump physics 
 		}
@@ -269,9 +271,8 @@
 			// jump physics
 			jump = false;
 
-			if (!descend) {
+			if (!isDescending()) {
 				jumpVelocity = 0;
-				descend = true;	
 			}
 			// jump physics
 		}
@@ -320,13 +321,14 @@
 			}
 
 	   	 	if(bunny.position.y <= CEILING) {
-	   	 		descend = true;
+	   	 		//bunny will float on the ceiling height depending on the constant values
+	   	 		//uncomment the following line to remove this behavior
+	   	 		//jumpVelocity = 0;
 	   	 		jump = false;
 	   	 		bunny.position.y = CEILING;
 	   	 	}
 
 	   	 	if(bunny.position.y >= FLOOR) {
-	   	 		descend = false;
 	   	 		airborne = false;
 	   	 		bunny.position.y = FLOOR;
 	   	 	}
