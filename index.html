@@ -108,7 +108,9 @@
 
 		var X_MIN = 0;
 		var FLOOR = 500;
-		var CEILING = FLOOR - 100;				
+		var CEILING = FLOOR - 150;
+		var JUMP_INITIAL_VELOCITY = -13;
+		var GRAVITY = 1;
 
 	    // ****************************************
 	    // LOAD the audio
@@ -231,8 +233,6 @@
 		var isBunnyLookingLeft = false;
 
 		// jump physics
-		var JUMP_INITIAL_VELOCITY = -15;
-		var GRAVITY = 1;
 		var jumpVelocity = 0;
 		var grounded = true;
 		// jump physics
