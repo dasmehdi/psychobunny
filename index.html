@@ -1,0 +1,471 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+	    <title>Pyscho Bunny 0.9 Alpha</title>
+	    <script src="pixi.js/bin/pixi.js"></script>
+	    <script src="buzz/dist/buzz.min.js"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+		<script type="text/javascript">
+		    $(function() {
+
+		    var conn;
+		    var msg = $("#msg");
+		    var log = $("#log");
+
+		    function appendLog(msg) {
+		        var d = log[0]
+		        var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+		        msg.appendTo(log)
+		        if (doScroll) {
+		            d.scrollTop = d.scrollHeight - d.clientHeight;
+		        }
+		    }
+
+		    $("#form").submit(function() {
+		        if (!conn) {
+		            return false;
+		        }
+		        if (!msg.val()) {
+		            return false;
+		        }
+		        conn.send(msg.val());
+		        msg.val("");
+		        return false
+		    });
+
+		    if (window["WebSocket"]) {
+		        conn = new WebSocket("ws://206.221.181.210:8080/ws");
+		        conn.onclose = function(evt) {
+		            appendLog($("<div><b>Connection closed.</b></div>"))
+		        }
+		        conn.onmessage = function(evt) {
+		            appendLog($("<div/>").text(evt.data))
+		        }
+		    } else {
+		        appendLog($("<div><b>Your browser does not support WebSockets.</b></div>"))
+		    }
+		    });
+		</script>
+		<style type="text/css">
+			html {
+		
+			}
+
+			body {
+			    padding: 0;
+			    margin: 0;
+			    width: 100%;
+			    height: 100%;
+			    background: gray;
+			}
+
+			body canvas {
+				float: left;
+				margin: 0;
+				height: auto !important;
+				min-height: 100%;
+				width: 80%;	
+			}
+
+			#log {
+				background: white;    
+				margin: 0;
+			    float: left;
+			    height: 580px;
+			    width: 19%;			    
+			    overflow: scroll;
+			}
+
+			#form {						    
+			    float: left;	
+			    margin: 0;
+			    height: 30px;		    
+			    width: 19%;
+			}
+			
+		</style>
+
+
+	</head>
+	<body>
+
+ 	<audio loop id="bgmusic">
+		<source src="http://upload.wikimedia.org/wikipedia/en/9/92/Possessed_-_Seven_Churches_-_10_-_Death_Metal_%28partial%29.ogg" type="audio/ogg">
+		Your browser does not support the audio tag.
+	</audio> 
+
+	<div id="game">
+
+	    <script>
+		
+		var CANVAS_WIDTH = $(window).width() * 0.8;
+	
+		if(CANVAS_WIDTH > 1500)
+		{
+			CANVAS_WIDTH = 1500;
+		}
+
+		var X_MIN = 0;
+		var FLOOR = 500;
+		var CEILING = FLOOR - 100;				
+
+	    // ****************************************
+	    // LOAD the audio
+	    // ***************************************
+		var sfxJump = new buzz.sound( "assets/Jump3", {
+		    formats: [ "ogg", "wav" ], // wav must be added, otherwise it will not work on IE
+		    volume: 30,	    
+		    // can't use webAudioApi=true, because fucking firefox 
+		});
+
+		var sfxFire = new buzz.sound( "assets/fireburning", {
+		    formats: [ "ogg", "wav" ],
+		    volume: 100,	    
+		});
+
+		buzz.defaults.preload = 'auto';
+
+
+	    // ****************************************
+	    // LOAD the graphics
+	    // ***************************************
+
+	    // create an new instance of a pixi stage
+	    var interactive = true;
+	    var stage = new PIXI.Stage(0x66FF99, interactive);
+
+	    // create a renderer instance.
+	    var renderer = PIXI.autoDetectRenderer(CANVAS_WIDTH, 600);
+	 
+	    // add the renderer view element to the DOM
+	    document.body.appendChild(renderer.view);
+	 
+		//Capture the keyboard arrow keys
+		var left = keyboard(37),
+			up = keyboard(38),
+			right = keyboard(39),
+			down = keyboard(40);
+			space = keyboard(32);
+			ctrl = keyboard(17);
+
+	    requestAnimFrame( animate );
+	 
+	   	// background
+	   	var texture2 = PIXI.Texture.fromImage("assets/background.jpg");
+	    var bg = new PIXI.Sprite(texture2);
+
+
+	    // create a filter
+	    var pixilateFilter = new PIXI.PixelateFilter ();
+		var blurFilter = new PIXI.BlurFilter();
+		 
+	    stage.addChild(bg);
+
+	    // blood
+		var bloodTexture = PIXI.Texture.fromImage("assets/blood.png");
+	    var blood = new PIXI.TilingSprite(bloodTexture, CANVAS_WIDTH, 600);
+	    blood.filters = [blurFilter, pixilateFilter];
+	    stage.addChild(blood); 
+	    blood.visible = false;
+
+	    // bunny
+	    var texture = PIXI.Texture.fromImage("assets/bunny.png");
+	    var bunny = new PIXI.Sprite(texture);
+	    bunny.anchor.x = 0.5;
+	    bunny.anchor.y = 0.5;
+	    bunny.position.x = 200;
+	    bunny.position.y = FLOOR;
+	    bunny.interactive = true;
+		stage.addChild(bunny);
+
+		//fire
+		var fireTexture = PIXI.Texture.fromImage("assets/fire.png");
+		var fire = new PIXI.Sprite(fireTexture);
+	    fire.anchor.x = 0.5;
+	    fire.anchor.y = 0.5;
+	    stage.addChild(fire);
+	    fire.visible =  false;
+
+
+	    // audo button
+	    var audioTexture = PIXI.Texture.fromImage("assets/audio.png");
+	    var audioTextureOff = PIXI.Texture.fromImage("assets/audiooff.png");
+	    var insaneButton = new PIXI.Sprite(audioTextureOff);
+	    insaneButton.anchor.x = 0.5;
+	    insaneButton.anchor.y = 0.5;
+	    insaneButton.position.x = 50;
+	    insaneButton.position.y = 50;
+	   
+		insaneButton.interactive = interactive;
+		var insaneSwitch = false;
+		var audioRef = document.getElementById("bgmusic"); 
+
+	 	insaneButton.click = function(mouseData){
+	 	 	insaneSwitch = !insaneSwitch;
+	 		console.log("mouse down on audio button");
+
+	 		if(insaneSwitch) { 			
+	 			blood.visible = true;
+				insaneButton.setTexture(audioTexture);
+				audioRef.play();
+
+
+	 		}
+	 		else {
+	 			blood.visible = false;
+	 			insaneButton.setTexture(audioTextureOff);
+	 			audioRef.pause();
+	 		}
+	 	
+	 	}
+
+		stage.addChild(insaneButton);
+
+		// keys
+		var moveLeft = false;
+		var moveRight = false;
+		var jump = false;
+		var descend = false;
+		var fireBreath = false;
+		var isBunnyLookingLeft = false;
+
+		left.press = function(){
+			moveLeft = true;
+		}
+
+		left.release = function(){
+			moveLeft = false;
+		}
+
+		right.press = function(){
+			moveRight = true;
+		}
+		
+		right.release = function(){
+			moveRight = false;
+		}
+
+		space.press = function(){
+			
+			if(!jump)
+			{			
+				sfxJump.play();
+	    	}
+
+		    jump = true;
+		}
+		
+		space.release = function(){
+			jump = false;
+			descend = true;
+		}
+
+		ctrl.press = function(){
+
+			if(insaneSwitch && !fireBreath)
+			{
+				sfxFire.play();
+				sfxFire.loop();
+			}
+
+			if(insaneSwitch){
+				fire.visible = true;
+				fireBreath = true;	
+			}		
+		}
+
+		ctrl.release = function(){
+			fire.visible = false;
+			fireBreath = false;
+
+			sfxFire.pause();
+		}
+
+	    function animate() {
+	 
+	        requestAnimFrame( animate );
+	        
+	   		if(moveLeft && bunny.position.x > X_MIN) {
+	   			bunny.position.x -= 5;
+	   			bunny.scale.x = 1;
+	   			isBunnyLookingLeft = false;
+	   		}
+
+	   		if(moveRight && bunny.position.x < CANVAS_WIDTH) {
+	   			bunny.position.x += 5;
+	   			bunny.scale.x = -1;
+	   			isBunnyLookingLeft = true;
+	   		}
+
+	   	 	if(bunny.position.y == CEILING)
+	   	 	{
+	   	 		descend = true;
+	   	 	}
+
+	   	 	if(bunny.position.y == FLOOR)
+	   	 	{
+	   	 		descend = false;
+	   	 	}
+
+	   		if(jump && !descend) {
+	   			bunny.position.y -= 5;
+	   		}
+
+	   		if(descend)
+	   		{
+	   			bunny.position.y += 5;	
+	   		}
+
+	   		if(fireBreath && !isBunnyLookingLeft)
+	   		{
+	   			fire.position.y = bunny.position.y + 10;
+	   			fire.position.x = bunny.position.x - 90;
+	   			fire.scale.x = 1;
+	   			
+	   		}
+	   		else if(fireBreath && isBunnyLookingLeft)
+	   		{
+	   			fire.position.y = bunny.position.y + 10;
+	   			fire.position.x = bunny.position.x + 90;
+	   			fire.scale.x = -1;
+	   			fire.visible = true;
+	   		}
+
+	   		blood.tilePosition.x = blood.tilePosition.x + 1;
+	   		blood.tilePosition.y = blood.tilePosition.y + 1;
+
+	        // render the stage  
+	        renderer.render(stage);
+	    }
+		 
+	    // focus handler
+		var canvas = document.getElementsByTagName("CANVAS")[0];
+		var isFocus = false;
+
+		canvas.addEventListener("mouseover", doFocus);
+		canvas.addEventListener("mouseleave", doNotFocus)
+
+		function doFocus() {		
+			isFocus = true;
+
+		}
+
+		function doNotFocus() {
+			isFocus = false;
+		}
+
+		//The `keyboard` helper function
+		function keyboard(keyCode) {
+			var key = {};
+			key.code = keyCode;
+			key.isDown = false;
+			key.isUp = true;
+			key.press = undefined;
+			key.release = undefined;
+			
+			//The `downHandler`
+			key.downHandler = function(event) {
+				console.log("some key was fucking pressed")
+
+				if(!isFocus) {
+					return;
+				}
+
+				if (event.keyCode === key.code) {
+					if (key.isUp && key.press) key.press();
+					key.isDown = true;
+					key.isUp = false;
+				}
+				event.preventDefault();
+			};
+
+			//The `upHandler`
+			key.upHandler = function(event) {
+
+				if(!isFocus) {
+					return;
+				}
+
+				if (event.keyCode === key.code) {
+					if (key.isDown && key.release) key.release();
+					key.isDown = false;
+					key.isUp = true;
+				}
+				event.preventDefault();
+			};
+
+			//Attach event listeners
+			window.addEventListener(
+				"keydown", key.downHandler.bind(key), false
+			);
+			
+			window.addEventListener(
+				"keyup", key.upHandler.bind(key), false
+			);	
+
+			return key;
+		}
+
+	    </script>
+
+    </div>
+ 
+	<div id="log"></div>
+	<form id="form">
+	    <input type="text" id="msg" size="30"/>	
+	    <input type="submit" value="Send" />
+	</form>
+
+	<div id="bottom">
+    <center> 
+    <h2>Controls</h2>
+    <p>
+    space = jump<br>
+    ctrl = fire
+    </p>
+
+    
+    <h2>Instructions</h2>
+    <p>Click the sound button on the top left and enjoy the fun.</p>
+
+    <h2>Change Log</h2>
+
+	<p>0.9<br>
+    * MORE INSANITY MODE<br>
+
+
+	<p>0.8<br>
+    * Chat width alignment has been fixed<br>
+
+	<p>0.7<br>
+    * Chat (probably broken)<br>
+
+
+	<p>0.6<br>
+    * Sound effects for jumping and fire breath<br>
+    * Added new image for audio button <br>
+
+
+	<p>0.5<br>
+    * White text<br>
+
+    <p>0.4<br>
+    * Added Change Log <br>
+    * Performance increase: Fire is now a visible toggle instead of adding sprites in and out of the scene.<br>
+
+    </p>
+
+	<!-- Start of SimpleHitCounter Code -->
+	<div align="center"><a href="http://www.simplehitcounter.com" target="_blank"><img src="http://simplehitcounter.com/hit.php?uid=1859975&f=16777215&b=0" border="0" height="18" width="83" alt="web counter"></a><br><a href="http://www.simplehitcounter.com" target="_blank" style="text-decoration:none;">web counter</a></div>
+	<!-- End of SimpleHitCounter Code -->
+
+
+    </center>
+
+    </div>
+
+
+
+    </body>
+</html>
