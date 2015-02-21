@@ -230,6 +230,13 @@
 		var fireBreath = false;
 		var isBunnyLookingLeft = false;
 
+		// jump physics
+		var JUMP_INITIAL_VELOCITY = -15;
+		var GRAVITY = 1;
+		var jumpVelocity = 0;
+		var grounded = true;
+		// jump physics
+
 		left.press = function(){
 			moveLeft = true;
 		}
@@ -247,18 +254,26 @@
 		}
 
 		space.press = function(){
-			
-			if(!jump)
-			{			
+			// jump physics
+			if(grounded) {
+				jumpVelocity = JUMP_INITIAL_VELOCITY;
 				sfxJump.play();
+				jump = true;
+				grounded = false;
+				descend = false;
 	    	}
-
-		    jump = true;
+			// jump physics 
 		}
 		
 		space.release = function(){
+			// jump physics
 			jump = false;
-			descend = true;
+
+			if (!descend) {
+				jumpVelocity = 0;
+				descend = true;	
+			}
+			// jump physics
 		}
 
 		ctrl.press = function(){
@@ -298,24 +313,26 @@
 	   			isBunnyLookingLeft = true;
 	   		}
 
-	   	 	if(bunny.position.y == CEILING)
-	   	 	{
+	   	 	// jump physics 
+	   		var movingVertically = !grounded;
+	   	 	
+	   	 	if (movingVertically) {
+				bunny.position.y += jumpVelocity;
+				jumpVelocity += GRAVITY;
+			}
+
+	   	 	if(bunny.position.y <= CEILING) {
 	   	 		descend = true;
+	   	 		jump = false;
+	   	 		bunny.position.y = CEILING;
 	   	 	}
 
-	   	 	if(bunny.position.y == FLOOR)
-	   	 	{
+	   	 	if(bunny.position.y >= FLOOR) {
 	   	 		descend = false;
+	   	 		grounded = true;
+	   	 		bunny.position.y = FLOOR;
 	   	 	}
-
-	   		if(jump && !descend) {
-	   			bunny.position.y -= 5;
-	   		}
-
-	   		if(descend)
-	   		{
-	   			bunny.position.y += 5;	
-	   		}
+	   	 	// jump physics
 
 	   		if(fireBreath && !isBunnyLookingLeft)
 	   		{
@@ -418,54 +435,58 @@
 	</form>
 
 	<div id="bottom">
-    <center> 
-    <h2>Controls</h2>
-    <p>
-    space = jump<br>
-    ctrl = fire
-    </p>
+	    <center> 
+		    <h2>Controls</h2>
+		    <p>
+			    space = jump<br>
+			    ctrl = fire
+		    </p>
 
-    
-    <h2>Instructions</h2>
-    <p>Click the sound button on the top left and enjoy the fun.</p>
+		    
+		    <h2>Instructions</h2>
+		    <p>Click the sound button on the top left and enjoy the fun.</p>
 
-    <h2>Change Log</h2>
+		    <h2>Change Log</h2>
 
-	<p>0.9<br>
-    * MORE INSANITY MODE<br>
-
-
-	<p>0.8<br>
-    * Chat width alignment has been fixed<br>
-
-	<p>0.7<br>
-    * Chat (probably broken)<br>
+			<p>
+				0.9<br>
+		    	* MORE INSANITY MODE<br>
+			</p>
 
 
-	<p>0.6<br>
-    * Sound effects for jumping and fire breath<br>
-    * Added new image for audio button <br>
+			<p>
+				0.8<br>
+		    	* Chat width alignment has been fixed<br>
+		    </p>
+
+			<p>
+				0.7<br>
+		    	* Chat (probably broken)<br>
+		    </p>
 
 
-	<p>0.5<br>
-    * White text<br>
-
-    <p>0.4<br>
-    * Added Change Log <br>
-    * Performance increase: Fire is now a visible toggle instead of adding sprites in and out of the scene.<br>
-
-    </p>
-
-	<!-- Start of SimpleHitCounter Code -->
-	<div align="center"><a href="http://www.simplehitcounter.com" target="_blank"><img src="http://simplehitcounter.com/hit.php?uid=1859975&f=16777215&b=0" border="0" height="18" width="83" alt="web counter"></a><br><a href="http://www.simplehitcounter.com" target="_blank" style="text-decoration:none;">web counter</a></div>
-	<!-- End of SimpleHitCounter Code -->
+			<p>
+				0.6<br>
+		    	* Sound effects for jumping and fire breath<br>
+		    	* Added new image for audio button <br>
+		    </p>
 
 
-    </center>
+			<p>
+				0.5<br>
+		    	* White text<br>
+		    </p>
 
+		    <p>
+		    	0.4<br>
+		    	* Added Change Log <br>
+		    	* Performance increase: Fire is now a visible toggle instead of adding sprites in and out of the scene.<br>
+		    </p>
+
+			<!-- Start of SimpleHitCounter Code -->
+			<div align="center"><a href="http://www.simplehitcounter.com" target="_blank"><img src="http://simplehitcounter.com/hit.php?uid=1859975&f=16777215&b=0" border="0" height="18" width="83" alt="web counter"></a><br><a href="http://www.simplehitcounter.com" target="_blank" style="text-decoration:none;">web counter</a></div>
+			<!-- End of SimpleHitCounter Code -->
+	    </center>
     </div>
-
-
-
     </body>
 </html>
