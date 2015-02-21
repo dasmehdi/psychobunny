@@ -109,7 +109,7 @@
 		var X_MIN = 0;
 		var FLOOR = 500;
 		var CEILING = FLOOR - 150;
-		var JUMP_INITIAL_VELOCITY = -13;
+		var JUMP_INITIAL_VELOCITY = -14;
 		var GRAVITY = 1;
 
 	    // ****************************************
@@ -234,7 +234,7 @@
 
 		// jump physics
 		var jumpVelocity = 0;
-		var grounded = true;
+		var airborne = false;
 		// jump physics
 
 		left.press = function(){
@@ -255,11 +255,11 @@
 
 		space.press = function(){
 			// jump physics
-			if(grounded) {
+			if(!airborne) {
 				jumpVelocity = JUMP_INITIAL_VELOCITY;
 				sfxJump.play();
 				jump = true;
-				grounded = false;
+				airborne = true;
 				descend = false;
 	    	}
 			// jump physics 
@@ -313,10 +313,8 @@
 	   			isBunnyLookingLeft = true;
 	   		}
 
-	   	 	// jump physics 
-	   		var movingVertically = !grounded;
-	   	 	
-	   	 	if (movingVertically) {
+	   	 	// jump physics
+	   	 	if (airborne) {
 				bunny.position.y += jumpVelocity;
 				jumpVelocity += GRAVITY;
 			}
@@ -329,7 +327,7 @@
 
 	   	 	if(bunny.position.y >= FLOOR) {
 	   	 		descend = false;
-	   	 		grounded = true;
+	   	 		airborne = false;
 	   	 		bunny.position.y = FLOOR;
 	   	 	}
 	   	 	// jump physics
